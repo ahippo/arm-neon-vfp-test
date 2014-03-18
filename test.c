@@ -4,7 +4,7 @@
 
 typedef double msec_t;
 
-msec_t time_msec(void) {
+static msec_t time_msec(void) {
         struct timeval now_tv;
         gettimeofday(&now_tv, NULL);
         return (msec_t)now_tv.tv_sec * (msec_t)1000 + now_tv.tv_usec / (msec_t)1000;
@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
         double ans = 1.0;
         msec_t start = time_msec();
         long iterations = atoi(argv[3]) * 1000 * 1000;
-        for(int i=0; i<iterations; i++) {
+        for(long i=0; i<iterations; i++) {
           ans *= f1;
           ans /= f2;
           //if(i < 10)
