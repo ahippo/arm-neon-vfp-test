@@ -1,14 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
+#include <time.h>
 
-typedef double msec_t;
+/* a - b in msecs */
+static long timespec_sub(const struct timespec *a, const struct timespec *b) {
+	long secs = a->tv_sec - b->tv_sec;
+	long nanosecs = a->tv_nsec - b->tv_nsec;
+	if (nanosecs < 0) {
+		secs--;
+		nanosecs += 1000000000L;
+	}
 
-static msec_t time_msec(void) {
-	struct timeval now_tv;
-	gettimeofday(&now_tv, NULL);
-	return (msec_t)now_tv.tv_sec * (msec_t)1000 + now_tv.tv_usec / (msec_t)1000;
+	return secs * 1000 + nanosecs / 1000000;
 }
+
 
 int main(int argc, char *argv[]) {
 	if (argc != 4) {
@@ -17,7 +22,11 @@ int main(int argc, char *argv[]) {
 	double f1 = atof(argv[1]);
 	double f2 = atof(argv[2]);
 	double ans = 1.0;
-	msec_t start = time_msec();
+	struct timespec start;
+	int rc = clock_gettime(CLOCK_MONOTONIC, &start);
+	if (rc < 0) {
+		exit(1);
+	}
 	long iterations = atoi(argv[3]) * 1000 * 1000;
 	for (long i = 0; i < iterations; i++) {
 		ans *= f1;
@@ -25,7 +34,11 @@ int main(int argc, char *argv[]) {
 		//if (i < 10)
 		//	printf("%d ans = %f\n", i, ans);
 	}
-	msec_t end = time_msec();
-	printf("ans = %f %d loop/msec\n", ans, (int)(iterations/(end - start)));
+	struct timespec end;
+	rc = clock_gettime(CLOCK_MONOTONIC, &end);
+	if (rc < 0) {
+		exit(1);
+	}
+	printf("ans = %f %ld loop/msec\n", ans, (long)(iterations / timespec_sub(&end, &start)));
 	return 0;
 }
